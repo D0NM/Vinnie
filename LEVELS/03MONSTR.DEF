@@ -1,0 +1,14 @@
+VINNY		32 32	4 9 22	27 9 22	9 22 30	9 22 0	0	men.bin		6 4 5 3
+
+WORM		16 08	0 8	16 8	8 06	8 0	0 3 1	worm.bin 	2 0 1 0
+WEBBER		24 16	0 8	24 8	12 16	12 0	0 2 2 	webber.bin 	4 0 1 0
+mBOMB		15 15	0 8	15 8	7 15	7 0	4 0 1	bomb.bin 	4 0 0 0
+STONE		16 16	0 8	16 8 	8 16	8 0	0 6 4	stone.bin 	4 0 1 0
+ISKRY		16 16	0 8	16 8 	8 16	8 0	0 5 1	enbull.bin 	8 0 0 0
+ISKRY_F		16 16	0 8	16 8 	8 16	8 0	3 6 1	enbull.bin 	8 0 0 0
+ISKRY_P		16 16	0 8	16 8 	8 16	8 0	6 1 1	enbull.bin 	8 0 0 0
+BAT		16 16	0 8	16 8 	8 16	8 0	3 4 2	bat.bin 	2 1 0 0
+BAT_P		16 16	0 8	16 8 	8 16	8 0	6 2 2	bat.bin 	2 1 0 0
+STNE		64 80	0 8	64 8 	32 80	32 0	17 1 16	stonemen.bin 	2 0 0 0
+RAT		57 25	0 8	57 8	28 20	28 0	0 6 4 	rat.bin 	4 0 1 0
+q

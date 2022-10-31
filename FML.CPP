@@ -6,7 +6,7 @@
 #include <dos.h>
 #include <fcntl.h>
 #include <string.h>
-#include <stat.h>
+#include <sys/stat.h>
 #include <dir.h>
 #include "famegraf.h"
 

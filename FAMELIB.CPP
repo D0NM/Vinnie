@@ -172,31 +172,45 @@ int PutLib(char *name, block dest, unsigned long lenblk) {
 		//Нет места в MAP
 		return (0);
 	} else {
-		if ( (lenpak=PackBlock(dest, lenblk))<lenblk ) {
-			_fmemcpy(dest,pakdest,lenpak);
-			farfree(pakdest); //если упаковывается блок...
-			flib[j].comp=1;
-		} else {
-			farfree(pakdest);
-			lenpak=lenblk; //не упаковался
+	   	if ( (lenpak=PackBlock(dest,lenblk))<lenblk ) {
+                //если упаковывается блок...
+	  		flib[j].comp=1;
+                        if (lenpak<=flib[j].lenpak && k==0) {
+				flib[j].posblk = lseek (fdz_lib, flib[j].posblk , SEEK_SET);
+			} else {
+				flib[j].posblk = lseek (fdz_lib, 0L , SEEK_END);
+				k=1;
+			}
+			_fmeminv(pakdest,lenpak);
+			if ( (write (fdz_lib, pakdest, lenpak)) == -1 ) {
+				//не пишется в бибку
+				--numblk;
+                                farfree(pakdest);
+				return 0;
+			}
+                        farfree(pakdest);
+
+	  	} else {
+                //не упаковался
+			lenpak=lenblk;
 			flib[j].comp=0;
-		}
+                        if (lenpak<=flib[j].lenpak && k==0) {
+				flib[j].posblk = lseek (fdz_lib, flib[j].posblk , SEEK_SET);
+			} else {
+				flib[j].posblk = lseek (fdz_lib, 0L , SEEK_END);
+				k=1;
+			}
 
-		if (lenpak<=flib[j].lenpak && k==0) {
-			flib[j].posblk = lseek (fdz_lib, flib[j].posblk , SEEK_SET);
-		} else {
-			flib[j].posblk = lseek (fdz_lib, 0L , SEEK_END);
-			k=1;
-		}
-
-		_fmeminv(dest,lenpak);
-		if ( (write (fdz_lib, dest, lenpak)) == -1 ) {
-			//не пишется в бибку
-			--numblk;
 			_fmeminv(dest,lenpak);
-			return 0;
-		}
-		_fmeminv(dest,lenpak);
+			if ( (write (fdz_lib, dest, lenpak)) == -1 ) {
+				//не пишется в бибку
+				--numblk;
+				_fmeminv(dest,lenpak);
+				return 0;
+			}
+			_fmeminv(dest,lenpak);
+	  	}
+
 		if( k ) {
 			//добавлен новая запись в MAP
 			posmap = lseek (fdz_lib, 0L , SEEK_END);
@@ -304,9 +318,8 @@ int PackLib(void) {
 }
 
 unsigned long PackBlock(block src, unsigned long lenblk) {
-	static unsigned char t,l,cl;
-
-	static unsigned long dpos,spos;
+	unsigned char t,l,cl;
+	long dpos,spos;
 
 	cl=dpos=spos=0;
 	pakdest=(block)famemalloc((unsigned long)(lenblk+3));
@@ -390,7 +403,7 @@ void far *famemalloc(unsigned long n) {
 }
 
 void _fmeminv(block s, unsigned long n) {
-	register unsigned long i;
+	unsigned long i;
 	//инвертирует строку
 	for (i=0; i<n; ++i) {
 		*s=(~*s);

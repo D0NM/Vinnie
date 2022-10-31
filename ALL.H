@@ -3,7 +3,7 @@
 
 //#define EDITOR 1
 #ifndef EDITOR
-#define DEMO 1
+//#define DEMO 1
 #endif
 
 #define wclock 1

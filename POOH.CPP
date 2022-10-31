@@ -847,24 +847,24 @@ void savelev(void) {
 		files[i][1]=levnum[1];
 	}
 	PutLib(f_def,(block)&leveldef,(unsigned long)sizeof(leveldef));
-	GetLib(f_def,(block)hidscr);
-	_fmemcpy(&leveldef,(block)hidscr,(unsigned long)sizeof(leveldef));
+	//GetLib(f_def,(block)hidscr);
+	//_fmemcpy(&leveldef,(block)hidscr,(unsigned long)sizeof(leveldef));
 	strcpy(f_fon,leveldef.fonname);
 	strcpy(f_bckg,leveldef.bckgname);
 
 	PutLib(f_level,(block)level,siz_level);
-	GetLib(f_level,(block)level);
+	//GetLib(f_level,(block)level);
 	PutLib(f_blevel,(block)blevel,siz_level);
-	GetLib(f_blevel,(block)blevel);
+	//GetLib(f_blevel,(block)blevel);
 	PutLib(f_demo,(block)demobuf,maxdemo);
-	GetLib(f_demo,(block)demobuf);
+	//GetLib(f_demo,(block)demobuf);
 
 	PutLib(f_bmonstr,(block)&kobj,(unsigned long)sizeof(kobj));
-	GetLib(f_bmonstr,(block)hidscr);
-	_fmemcpy(&kobj,(block)hidscr,(unsigned long)sizeof(kobj));
+	//GetLib(f_bmonstr,(block)hidscr);
+	//_fmemcpy(&kobj,(block)hidscr,(unsigned long)sizeof(kobj));
 	PutLib(f_models,(block)&models,(unsigned long)sizeof(models));
-	GetLib(f_models,(block)hidscr);
-	_fmemcpy(&models,(block)hidscr,(unsigned long)sizeof(models));
+	///GetLib(f_models,(block)hidscr);
+	//_fmemcpy(&models,(block)hidscr,(unsigned long)sizeof(models));
 }
 
 void readmonstr(void) {
@@ -2861,7 +2861,7 @@ void f_game(void) { //проба скролла и объектов
 		demobuf[pdemo-1]=1<<6; //клавиша ESC
 		SetLib("levels");
 		PutLib(f_demo,(block)demobuf,maxdemo);
-		GetLib(f_demo,(block)demobuf);
+		//GetLib(f_demo,(block)demobuf);
 	}
 	readlev(); Cls(28); ris_lab(xw,yw); PaletteOn(palette);
     m.on();

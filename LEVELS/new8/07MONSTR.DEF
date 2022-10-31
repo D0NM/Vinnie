@@ -1,0 +1,12 @@
+VINNY		32 32	4 9 22	27 9 22	9 22 30	9 22 0	0	men.bin		6 4 5 3
+
+WORM		16 08	0 8	16 8	8 06	8 0	0 3 1	worm.bin 	2 1 1 0
+SLONOP		78 93	6 12	87 12	46 70	46 0	20 4 20	slonpot.bin 	4 1 1 0
+mGLAZ		14 10	0 8	14 8	7 09	7 0	6 1 1	glaz.bin 	4 0 1 0
+MEAT		26 9	0 8	26 8	13 07	13 0	0 1 5	meat.bin 	5 0 0 0
+mHAND		19 15	0 8	19 8	9 13	13 0	1 2 5	hand.bin 	5 0 0 0
+RAT		57 25	0 8	57 8	28 20	28 0	0 6 4 	rat.bin 	4 0 1 0
+mBOMB		15 15	0 8	15 8	7 15	7 0	6 0 3	bomb.bin 	4 0 0 0
+vBOMB		15 15	0 8 	15 8	7 15	7 0	3 0 3	bomb.bin        4 0 0 0
+hvBomb		15 15	0 8	15 8	7 15	7 0	3 1 3	bomb.bin        4 0 0 0
+q

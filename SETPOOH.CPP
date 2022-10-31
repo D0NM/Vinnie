@@ -262,6 +262,7 @@ main_menu:
 			setup.f=cmenu[2];
 
 			PutLib("pooh.cfg",(block)&setup,(unsigned long)sizeof(setup));
+			PackLib();
 
 			fatalerror("Установка закончена. Спасибо за покупку!\n"
 			"Для запуска игры наберите POOH и нажмите ENTER\n");
@@ -440,6 +441,7 @@ set_jst:
 		puts("(c) 1995 FaMe by BMV");
 	}
 	PutLib("pooh.cfg",(block)&setup,(unsigned long)sizeof(setup));
+	PackLib();
 	return;
 }
 #endif
