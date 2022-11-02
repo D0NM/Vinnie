@@ -1,45 +1,9 @@
------------------------------------------------------------¬
-¦Игра "Супер Винни-Пух" (C)1995 FaMe SoftWare              ¦
-¦Автор: Михаил Витальевич Братусь & Sound Mans co.         ¦
-¦E-mail: bmv@mail.ru                                       ¦
-L-----------------------------------------------------------
+A platformer game "Super Vinnie-Pooh" (C)1995 FaMe SoftWare
+Author Mikhail Bratus(Gfx, coding, scripting) & Sound Mans co.(Music)
+Игра "Супер Винни-Пух" (C)1995 FaMe SoftWare
+Автор: Михаил Братусь(Вообще всё) & Sound Mans co.(Музыка)
 
-		Требования к компьютеру:
-	VGA-256k,620k свободной оперативной памяти.
-	Частота процессора у 286 >= 16Mhz
-	Sound Blaster, Covox, Disney SndSrc
-	Игра возможна с 2х кнопочным IBM-джойстиком (аналоговым).
+- Original readme from the commercial release in Russia: [Прочти меня S_POOH.txt](Прочти меня S_POOH.txt)
+- Readme of v.2.05 port and bug fixes (by -=CHE@TER=-): [prtbuild.txt](prtbuild.txt)
+- -=CHE@TER=-'s Super Pooh site: [The story of the port and links to the resource files](http://ctpax-cheater.losthost.org/htmldocs/pooh.htm)
 
-		Н А С Т Р О Й К А:
-Для настройки игры напечатайте SETPOOH и нажмите ENTER.
-
-		З А П У С К   И Г Р Ы:
-Для запуска игры напечатайте POOH и нажмите ENTER.
-
-	Клавиши управления в игре:
-
-ESC - Выход/Exit или прерывание мультфильма.
-
-P - Пауза/Pause
-
-F - Скорость графики от 1 до 4. (для 286 и 386 машин)
-
-Alt - стрельба.
-
-Ctrl - Прыжок.
-
-Стрелка ВВЕРХ - Включение/выключение объекта (кнопка, рубильник,
-замочная скважина). Вход в магазин, в открытую дверь, в секретный
-невидимый лаз. А также кнопка необходима для обозревания окрестностей
-выше Пуха.
-
-Стрелка ВНИЗ - кнопка необходима для обозревания окрестностей ниже Пуха.
-
-ВЛЕВО и ВПРАВО - ходьба влево/вправо.
-
-Кнопки в магазине:
-	Up, Down, Left, Right - выбор вещи или выхода
-	Alt, Space и Enter - выбор
-	Ctrl - выход.
-
-Спасибо за покупку!
