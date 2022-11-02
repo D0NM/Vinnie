@@ -3,6 +3,8 @@ Author Mikhail Bratus(Gfx, coding, scripting) & Sound Mans co.(Music)
 Игра "Супер Винни-Пух" (C)1995 FaMe SoftWare
 Автор: Михаил Братусь(Вообще всё) & Sound Mans co.(Музыка)
 
+- This game was changed (story, gfx, etc) for the Korean GamePark32 console to be published as SUPER PLUSHA [(open source now)](https://github.com/D0NM/Super).
+
 - Original readme from the commercial release in Russia: [readmespooh.txt](readmespooh.txt)
 - Readme of v.2.05 port and bug fixes (by -=CHE@TER=-): [prtbuild.txt](prtbuild.txt)
 - -=CHE@TER=-'s Super Pooh site: [The story of the port and links to the resource files](http://ctpax-cheater.losthost.org/htmldocs/pooh.htm)
