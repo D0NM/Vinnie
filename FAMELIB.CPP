@@ -1,4 +1,4 @@
-#include <alloc.h>
+#include <malloc.h>
 #include <stdlib.h>
 #include <io.h>
 #include <fcntl.h>
@@ -7,20 +7,30 @@
 #include <sys\stat.h>
 #include <conio.h>
 
+// PATCH: platform code
+#ifndef __MSDOS__
+#include "platform.h"
+#endif
+
 #include "famegraf.h"
 extern void fatalerror(char *);
 
 #define MaxBlocks 128
 
-struct zapblk {
+#pragma pack(push, 1)
+typedef struct {
 	unsigned long posblk;
 	unsigned long lenblk;
 	unsigned long lenpak;
 	char comp;
 	char typblk;
 	char name[13];
-} flib[MaxBlocks];
+} zapblk;
+#pragma pack(pop)
 //одна запись = 27 байт
+
+// PATCH: separate type declaration and variable
+zapblk flib[MaxBlocks];
 
 char name_lib[13];
 
@@ -146,7 +156,7 @@ unsigned long SizeLib(char *name) {
 int PutLib(char *name, block dest, unsigned long lenblk) {
 	static int i,j,k;
 
-	if ( fdz_lib<0 || lenblk>(unsigned long)65000) {
+	if ( fdz_lib<0 || lenblk>(unsigned long)65000UL) {
 		return 0;
 	}
 
@@ -172,45 +182,31 @@ int PutLib(char *name, block dest, unsigned long lenblk) {
 		//Нет места в MAP
 		return (0);
 	} else {
-	   	if ( (lenpak=PackBlock(dest,lenblk))<lenblk ) {
-                //если упаковывается блок...
-	  		flib[j].comp=1;
-                        if (lenpak<=flib[j].lenpak && k==0) {
-				flib[j].posblk = lseek (fdz_lib, flib[j].posblk , SEEK_SET);
-			} else {
-				flib[j].posblk = lseek (fdz_lib, 0L , SEEK_END);
-				k=1;
-			}
-			_fmeminv(pakdest,lenpak);
-			if ( (write (fdz_lib, pakdest, lenpak)) == -1 ) {
-				//не пишется в бибку
-				--numblk;
-                                farfree(pakdest);
-				return 0;
-			}
-                        farfree(pakdest);
-
-	  	} else {
-                //не упаковался
-			lenpak=lenblk;
+		if ( (lenpak=PackBlock(dest, lenblk))<lenblk ) {
+			_fmemcpy(dest,pakdest,lenpak);
+			farfree(pakdest); //если упаковывается блок...
+			flib[j].comp=1;
+		} else {
+			farfree(pakdest);
+			lenpak=lenblk; //не упаковался
 			flib[j].comp=0;
-                        if (lenpak<=flib[j].lenpak && k==0) {
-				flib[j].posblk = lseek (fdz_lib, flib[j].posblk , SEEK_SET);
-			} else {
-				flib[j].posblk = lseek (fdz_lib, 0L , SEEK_END);
-				k=1;
-			}
+		}
 
-			_fmeminv(dest,lenpak);
-			if ( (write (fdz_lib, dest, lenpak)) == -1 ) {
-				//не пишется в бибку
-				--numblk;
-				_fmeminv(dest,lenpak);
-				return 0;
-			}
-			_fmeminv(dest,lenpak);
-	  	}
+		if (lenpak<=flib[j].lenpak && k==0) {
+			flib[j].posblk = lseek (fdz_lib, flib[j].posblk , SEEK_SET);
+		} else {
+			flib[j].posblk = lseek (fdz_lib, 0L , SEEK_END);
+			k=1;
+		}
 
+		_fmeminv(dest,lenpak);
+		if ( (write (fdz_lib, dest, lenpak)) == -1 ) {
+			//не пишется в бибку
+			--numblk;
+			_fmeminv(dest,lenpak);
+			return 0;
+		}
+		_fmeminv(dest,lenpak);
 		if( k ) {
 			//добавлен новая запись в MAP
 			posmap = lseek (fdz_lib, 0L , SEEK_END);
@@ -267,7 +263,7 @@ int SaveMap(void) {
 }
 
 int PackLib(void) {
-	int i,j;
+	int i;//,j;
 	block tmp;
 	int fdz;
 	if( fdz_lib<0 ) {
@@ -318,8 +314,9 @@ int PackLib(void) {
 }
 
 unsigned long PackBlock(block src, unsigned long lenblk) {
-	unsigned char t,l,cl;
-	long dpos,spos;
+	static unsigned char t,l,cl;
+
+	static unsigned long dpos,spos;
 
 	cl=dpos=spos=0;
 	pakdest=(block)famemalloc((unsigned long)(lenblk+3));
@@ -403,7 +400,7 @@ void far *famemalloc(unsigned long n) {
 }
 
 void _fmeminv(block s, unsigned long n) {
-	unsigned long i;
+	register unsigned long i;
 	//инвертирует строку
 	for (i=0; i<n; ++i) {
 		*s=(~*s);

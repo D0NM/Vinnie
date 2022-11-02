@@ -1,21 +1,19 @@
 #include	<stdlib.h>
-#include	<bios.h>
-#include	<alloc.h>
+#include	<dos.h>
+#include	<malloc.h>
 #include	<string.h>
 
 #include "famegraf.h"
-#include "mouse.h"
 #include "joy.h"
 #include "keys.h"
 #include "all.h"
 
-Joy J;
-Mouse m;
 #ifdef EDITOR
+#include "mouse.h"
+Mouse m;
 #include "dialog.h"
 Panel p;
 #endif
-Keys k=Keys(md);
 
 long tic; //для задержки по таймеру
 
@@ -63,6 +61,8 @@ char str0[25];
 /*const */ char far stroka[255];
 char levnum[4]="01";
 int curr_level=1;
+// PATCH: save last valid password
+char lastpass[6] = "";
 
 char files[10][13]={ //файлы под уровни
 	"01def.bin",
@@ -84,7 +84,7 @@ levdef leveldef;
 //размер уровня
 unsigned int siz_xlev=500;
 unsigned int siz_ylev=60;
-unsigned long siz_level=(unsigned long)siz_xlev*siz_ylev;
+unsigned long siz_level=(unsigned long)500*60;//siz_xlev*siz_ylev;
 unsigned long svel=9,cvel=8;
 
 char poc[32][16]={
@@ -146,13 +146,15 @@ char nappoc[32]={0,0,-3,-2,-2,-1,-1,-1,-1,1,1,1,1,2,2,3, 0,0,0,0,-3,3,0,0,0,0,0,
 
 int nstrip=1;
 int striply=1;
+#pragma pack(push, 1)
 struct {
-	int x,y; /*начальная позиция*/
-	int ly;	/*высота полоски*/
-	int sx,sy; /**/
-	int st;
-	int typ;
+	short x,y; /*начальная позиция*/
+	short ly;	/*высота полоски*/
+	short sx,sy; /**/
+	short st;
+	short typ;
 } strip[maxstrip];
+#pragma pack(pop)
 void show_strip(int y);
 void do_strip(int sx);
 
@@ -249,9 +251,11 @@ unsigned int xw=0;
 unsigned int yw=0;
 
 int yesno(char *);
-int end,pause,key_f,key_b;
-int left,right,up,down,jump,fire;
-int t_left,t_right,t_up,t_down,t_jump,t_fire;
+// PATCH: end => zend (conflict with some internal variable)
+// PATCH: added volatile or got infinite stuck in pause mode
+volatile int zend,pause,key_f,key_b;
+volatile int left,right,up,down,jump,fire;
+volatile int t_left,t_right,t_up,t_down,t_jump,t_fire;
 
 unsigned int r_x,r_y; //прежние координаты лев. верхн угла окна
 
@@ -261,26 +265,138 @@ block lfonts;    /*буфер для тонких шрифтов*/
 #endif
 
 
+#pragma pack(push, 1)
 struct {
-	int dev,mix,vol;
-	int j;	//исп джойстик или нет
-	int f;	//включить сзади фон или нет
-	int cheat; //кряк - или нет
+	short dev,mix,vol;
+	short j;	//исп джойстик или нет
+	short f;	//включить сзади фон или нет
+	short cheat; //кряк - или нет
 } setup;
+#pragma pack(pop)
 int dev,mix,vol,state;
 
-void main(void) {
+// PATCH: new SwapShort() for short type since type changed from int
+void SwapShort (short *pa,short *pb) {
+	register short t;
+	t=*pa; *pa=*pb; *pb=t;
+}
+
+// PATCH: for non Russian keyboard
+int GetLevelPass(int xs, int ys, char *str, int lstr) {
+int lpos, i;
+//int xs = G_x, ys = G_y; /*поз графич курсора*/
+char oldbk;
+  oldbk = char_bkgd;
+  char_bkgd = 30;
+  kb_on();
+  zend = left = right = up = down = jump = fire = 0;
+  // PATCH: save last valid password
+  if (lastpass[0]) {
+    lpos = lstr - 1;
+    strcpy(stroka, lastpass);
+  } else {
+    lpos = 0;
+    str[lpos] = '\x80';
+  }
+  str[lpos + 1] = 0;
+  up = 1;
+  str[lpos]++;
+  i = 0;
+  while (!i) {
+    if (fire || zend || up || down || left || right) {
+      do {
+        if (left) {
+          if (lpos) {
+            str[lpos] = 0;
+            lpos--;
+          }
+        }
+        if (fire || right) {
+          lpos++;
+          if (lpos >= lstr) {
+            i = 1;
+          } else {
+            str[lpos] = str[lpos - 1];
+            str[lpos + 1] = 0;
+          }
+          break;
+        }
+        if (zend) {
+          str[0] = 0;
+          i = -1;
+          break;
+        }
+        if (up) {
+          if (str[lpos] > '\x80') {
+            str[lpos]--;
+          } else {
+            str[lpos] = '\x9F';
+          }
+          break;
+        }
+        if (down) {
+          if (str[lpos] < '\x9F') {
+            str[lpos]++;
+          } else {
+            str[lpos] = '\x80';
+          }
+          break;
+        }
+      } while (0);
+      if (!i) {
+        MoveXY(xs, ys);
+        for (i = 0; i <= (lstr + 1); i++) { PutCh(' '); }
+        i = 0;
+        MoveXY(xs, ys);
+        vputs(str);
+      }
+      while (zend || left || right || up || down || jump || fire) {
+        zend = left = right = up = down = jump = fire = 0;
+      }
+    }
+  }
+  kb_off();
+  char_bkgd = oldbk;
+  return(i);
+}
+
+// PATCH: joystick
+void jupdate(unsigned short butt) {
+  // allow joystick and keyboard to coexists
+  left  = (butt & JOY1_L) ? 1 : left;
+  right = (butt & JOY1_R) ? 1 : right;
+  up    = (butt & JOY1_U) ? 1 : up;
+  down  = (butt & JOY1_D) ? 1 : down;
+  fire  = (butt & JOY1_A) ? 1 : fire;
+  jump  = (butt & JOY1_B) ? 1 : jump;
+}
+
+int main(void) {
 	int i,j;
+	// PATCH: editor only
+	#ifdef EDITOR
 	int x,y,p_up,p_down,p_left,p_right;
+	#endif
 	static char f_help[13]="help0.pic";
+	#ifdef __MSDOS__
+	block mpcs; // PATCH: PC Speaker
+	#endif
+
+	kb_set(md);
+	kb_on();
 
 	//считаю конфиг из файла
 	SetLib("graph");
 	GetLib("pooh.cfg",(block)&stroka);
 	_fmemcpy((block)&setup.dev,(block)&stroka,(unsigned long)sizeof(setup));
 	vol=setup.vol; dev=setup.dev; mix=setup.mix;
-	if (J.present)	//если есть жустик
-		J.present=setup.j;
+	dev = ((dev == -1) ? 255 : dev); // PATCH: fix disabled state (-1 => 255)
+	js_init();
+	js_set(jupdate);
+	if (js_state() && setup.j)	//если есть жустик
+		js_on();
+	//if (J.present)	//если есть жустик
+		//J.present=setup.j;
 
 #ifdef EDITOR
 	dev=255;
@@ -289,7 +405,20 @@ void main(void) {
 #else
 	speedraw=setup.f;	//фон надо?
 	//k.off();
-	modinit();
+	if ( dev!=255 ) { // PATCH: disable if not specified
+		#ifdef __MSDOS__
+		// PATCH: PC Speaker constantly make noise in DOSBox with other sound devices
+		if (dev != 0) {
+			mpcs = (block) modinit;
+			mpcs += 0x1852 - 0x26A5; // add instruction address, sub modinit() address
+			// check for required code to patch: or al, 003h
+			if ((mpcs[0] == 0x0C) && (mpcs[1] == 0x03)) {
+				mpcs[1] = 0x00;
+			}
+		}
+		#endif
+		modinit();
+	}
 	//moddevice( &dev );
 
 #endif
@@ -301,12 +430,15 @@ void main(void) {
 		,needmem-coreleft());
 		fatalerror(stroka);
 	}*/
-	modvolume(vol,vol,vol,vol);
+	if ( dev!=255 ) // PATCH: disable if not specified
+		modvolume(vol,vol,vol,vol);
 
 #ifdef EDITOR
-	J.present=0;
+	js_off();
+	//J.present=0;
 #else
-	if ( J.present ) {
+	//if ( J.present ) {
+	if (js_state()) {
 		printf("Калибровка 1го джойстика:\n"
 			"Отцентрируйте джойстик и нажмите кнопку,\n"
 			"Наклоните джойстик в левый верхний угол и нажмите кнопку,\n"
@@ -316,7 +448,8 @@ void main(void) {
 			modsetup("intro.fms", 4, 0 ,mix, dev, &state );
 			modvolume(vol,vol,vol,vol);
 		}
-		J.init();
+		js_test();
+		//J.init();
 		if ( dev!=255 ) {
 			//выкл муз
 			modstop();
@@ -527,15 +660,15 @@ void main(void) {
 	}
 #else
 	//Keys k=Keys(md);
-	curr_level=0; end=0;
+	curr_level=0; zend=0;
 
-	while ( end==0 ) {
+	while ( zend==0 ) {
 		//пока не нажата какая-либо клавиша - засставка
-		k.set(md);
+		kb_set(md);
 		SetLib("mult"); //мульт на начало уровня
 		mult("zast.rec");
 		SetLib("graph");
-		if ( end ) {
+		if ( zend ) {
 			goto mainmenu;
 		}
 
@@ -548,8 +681,8 @@ void main(void) {
 		PaletteOn(palette);
 
 		tic=gettic()+18*10;
-		end=0;
-                while (gettic()<tic && end==0 /*&& m.left.press==0*/) {
+		zend=0;
+                while (gettic()<tic && zend==0 /*&& m.left.press==0*/) {
 			delay(500);
 		}
 		//if ( m.left.press ) end=1;
@@ -562,7 +695,7 @@ mainmenu:
 			modstop();
 		}
 
-		if ( end ) {
+		if ( zend ) {
 			//создание фона для меню
 			//m.off();
 			SetLib("graph");
@@ -585,7 +718,8 @@ mainmenu:
 			MoveXY(5,10);
 			vputBs("Супер Винни-Пух",tfnt+144*4);
 			MoveXY(22,170);
-			vputBs("(C) 1996 FaMe",tfnt+144*1);
+			vputBs("(C) 2022, v2.05", tfnt + 144 * 1); // PATCH: show version and year
+			//vputBs("(C) 1996 FaMe",tfnt+144*1);
 #ifdef DEMO
 			MoveXY(10,192);
 			vputsc("Демонстрационная версия");
@@ -598,14 +732,14 @@ mainmenu:
 
 			PaletteOn(palette);
 			//m.on();
-			k.set(mz);
+			kb_set(mz);
 
 			if ( dev!=255 ) {
 				//вкл музыку
 				modsetup("intro.fms", 4, 0 ,mix, dev, &state );
 				modvolume(vol,vol,vol,vol);
 			}
-			j=end=left=right=up=down=jump=fire=i=0;
+			j=zend=left=right=up=down=jump=fire=i=0;
 
 			while ( fire==0 && jump==0 ) {
 				//цикл меню
@@ -641,7 +775,7 @@ mainmenu:
 						i=0;
 					}
 				}
-				if ( end==1 ) {	//выход по еску
+				if ( zend==1 ) {	//выход по еску
 					fire=i=5;
 				}
 				if ( ++j>100 ) {	//выход на ДЕМО
@@ -659,18 +793,20 @@ mainmenu:
 					curr_level=1;
 					f_game();
 					curr_level=0;
-					end=0;
+					zend=0;
 					break;
 				case 1:
 					//m.off();
 					demo=0;
 					MoveXY(nmenx+60,nmeny+14*1);
-					k.off();
+					kb_off();
 					stroka[0]=0;
 					WPut(nmenx+55,nmeny+14*1-5,60,19);
 					MoveXY(nmenx+60,nmeny+14*1);
-					GetString(stroka,5);
-					k.on();
+					// PATCH: for non Russian keyboard
+					GetLevelPass(nmenx + 60, nmeny + 14 * 1, stroka, 5);
+					//GetString(stroka,5);
+					kb_on();
 					//m.on();
 					if ( dev!=255 ) {
 						modstop();//выкл муз
@@ -681,11 +817,16 @@ mainmenu:
 #else
 					if( curr_level>0 && curr_level<=2 ) {
 #endif
+						// PATCH: save last valid password
+						strcpy(lastpass, stroka);
 						SetScreen(hidscr);
 						f_game();
+					} else {
+						// PATCH: save last valid password
+						lastpass[0] = 0;
 					}
 					curr_level=0;
-					end=0;
+					zend=0;
 					break;
 				case 2:	//демо
 					PaletteOff(palette);
@@ -701,14 +842,14 @@ mainmenu:
 						//выкл муз
 						modstop();
 					}
-					str0[0]=i=left=right=end=0;
+					str0[0]=i=left=right=zend=0;
 					do {
 						PaletteOff(palette);
 						f_help[4]='0'+(char)i;
 						GetLibs(f_help,(block)hidscr);
 						PutImg(0,0,320,200,(block)hidscr);
 						PaletteOn(palette);
-						while( left==0 && right==0 && end==0 );
+						while( left==0 && right==0 && zend==0 );
 						if( left && i>0) {
 							i--;
 						} else
@@ -716,9 +857,9 @@ mainmenu:
 							i++;
 						}
 						left=right=0;
-					} while( end==0 );
+					} while( zend==0 );
 					PaletteOff(palette);
-					end=1;
+					zend=1;
 					goto mainmenu;
 
 				case 4:	//об авторе
@@ -727,20 +868,20 @@ mainmenu:
 						//выкл муз
 						modstop();
 					}
-					end=0;
+					zend=0;
 					mult("author.rec");
-					end=1;
+					zend=1;
 					goto mainmenu;
 
 				case 5:
 					//выход в дос
-					end=1;
+					zend=1;
 					//break;
 
 			}
 
 
-		} else if ( end==0 ) {
+		} else if ( zend==0 ) {
 			//демонстрация
 do_demo:
 			//m.off();
@@ -787,19 +928,20 @@ do_demo:
 			}
 			//m.on();
 			f_game();
-			end=0;
+			zend=0;
 		}
 
 	}
 #endif
 	fatalerror("Спасибо за игру!");
-	return;
+	return(0);
 }
 
 void readlev(void) {
+	int i;
 	SetLib("levels");
 	sprintf(levnum,"%02d",curr_level);
-	for (int i=0; i<=9; ++i) {
+	for (i=0; i<=9; ++i) {
 		files[i][0]=levnum[0];
 		files[i][1]=levnum[1];
 	}
@@ -840,31 +982,32 @@ void readlev(void) {
 }
 
 void savelev(void) {
+	int i;
 	SetLib("levels");
 	sprintf(levnum,"%02d",curr_level);
-	for (int i=0; i<=9; ++i) {
+	for (i=0; i<=9; ++i) {
 		files[i][0]=levnum[0];
 		files[i][1]=levnum[1];
 	}
 	PutLib(f_def,(block)&leveldef,(unsigned long)sizeof(leveldef));
-	//GetLib(f_def,(block)hidscr);
-	//_fmemcpy(&leveldef,(block)hidscr,(unsigned long)sizeof(leveldef));
+	GetLib(f_def,(block)hidscr);
+	_fmemcpy(&leveldef,(block)hidscr,(unsigned long)sizeof(leveldef));
 	strcpy(f_fon,leveldef.fonname);
 	strcpy(f_bckg,leveldef.bckgname);
 
 	PutLib(f_level,(block)level,siz_level);
-	//GetLib(f_level,(block)level);
+	GetLib(f_level,(block)level);
 	PutLib(f_blevel,(block)blevel,siz_level);
-	//GetLib(f_blevel,(block)blevel);
+	GetLib(f_blevel,(block)blevel);
 	PutLib(f_demo,(block)demobuf,maxdemo);
-	//GetLib(f_demo,(block)demobuf);
+	GetLib(f_demo,(block)demobuf);
 
 	PutLib(f_bmonstr,(block)&kobj,(unsigned long)sizeof(kobj));
-	//GetLib(f_bmonstr,(block)hidscr);
-	//_fmemcpy(&kobj,(block)hidscr,(unsigned long)sizeof(kobj));
+	GetLib(f_bmonstr,(block)hidscr);
+	_fmemcpy(&kobj,(block)hidscr,(unsigned long)sizeof(kobj));
 	PutLib(f_models,(block)&models,(unsigned long)sizeof(models));
-	///GetLib(f_models,(block)hidscr);
-	//_fmemcpy(&models,(block)hidscr,(unsigned long)sizeof(models));
+	GetLib(f_models,(block)hidscr);
+	_fmemcpy(&models,(block)hidscr,(unsigned long)sizeof(models));
 }
 
 void readmonstr(void) {
@@ -966,10 +1109,10 @@ void doshop(int maxit) {
 	int i,j,l;
 	if ( maxit<=0 ) maxit=1;
 
-	k.set(mz);
+	kb_set(mz);
 
 	CurrentColor=draw=char_bkgd=31;
-	l=i=j=end=fire=jump=down=left=right=up=
+	l=i=j=zend=fire=jump=down=left=right=up=
 	t_fire=t_jump=t_down=t_left=t_right=t_up=0;
 
 	NormalScreen();
@@ -1015,7 +1158,10 @@ void doshop(int maxit) {
 		tic=gettic()+2;
 
 		//считаем с жустика, если он есть
-		if ( J.present ) {
+		if (js_state()) {
+			js_read();
+		}
+		/*if ( J.present ) {
 			J.status();
 			up=J.a.up;
 			down=J.a.down;
@@ -1023,7 +1169,7 @@ void doshop(int maxit) {
 			right=J.a.right;
 			fire=J.a.a;
 			jump=J.a.b;
-		}
+		}*/
 
 		if ( up || left ) {
 			if (--i<0)
@@ -1128,9 +1274,9 @@ void doshop(int maxit) {
 	}
 	//if ( J.present==0 )
 	//	while ( jump!=0); //ждем пока не отпустят ESC
-	char_bkgd=up=down=left=right=fire=end=jump=0;
+	char_bkgd=up=down=left=right=fire=zend=jump=0;
 	SetScreen(old);
-	k.set(mm);
+	kb_set(mm);
 }
 #ifdef EDITOR
 
@@ -1926,7 +2072,7 @@ void fatalerror(char *t) {
 	SetLib("");
 	CloseGraph();
 	puts(t);
-	k.off();
+	kb_off();
 	exit(1);
 }
 
@@ -2005,7 +2151,8 @@ void show_strip(int y) {
 	}
 }
 
-void do_strip(int sx=0) {
+//void do_strip(int sx=0) {
+void do_strip(int sx) {
 	int i;
 	sx=min(sx,319);
 	for ( i=0; i<nstrip; ++i ) {
@@ -2056,7 +2203,7 @@ void actmodel(void) {
 					if ( stricmp("EXIT",models[i].name0)==0 ) {
 						//конец уровня!!!!
 						man.s=s_end;
-						end=1;
+						zend=1;
 						//т.к. выод то пока!
 						break;
 					} else
@@ -2180,7 +2327,7 @@ void far mm(unsigned char butt) {
 	}
 
 	if ( butt==1 ) //Esc
-		end=c;
+		zend=c;
 	if ( butt==77 )
 		t_right=c;
 	if ( butt==75 )
@@ -2204,7 +2351,7 @@ void far mm(unsigned char butt) {
 void far mz(unsigned char butt) {
 	//обработка прерывания по клавиатуре
 	if ( butt==1 ) //Esc
-		end=1;
+		zend=1;
 	if ( butt==77 )
 		right=1;
 	if ( butt==75 )
@@ -2222,14 +2369,14 @@ void far mz(unsigned char butt) {
 void far md(unsigned char butt) {
 	//обработка прерывания по клавиатуре
 	//для демонстрации
-	end=1;
+	zend=1;
 }
 
 //=============================================================
 
 void f_game(void) { //проба скролла и объектов
 	static int x,y,sx,sy,i,scrsdvig,scrsdvig_;
-	Keys k=Keys(mm);
+	kb_set(mm);
 
 #ifdef EDITOR
 	m.off();
@@ -2237,7 +2384,7 @@ void f_game(void) { //проба скролла и объектов
 
 	if ( demo ) {
 		//для демонструхи другой обработч клавишь
-		k.set(md);
+		kb_set(md);
 	} else {
 		PaletteOff(palette);
 	}
@@ -2245,7 +2392,7 @@ void f_game(void) { //проба скролла и объектов
 	SetLib("graph");
 	GetLib("normal.col",palette);
 
-	shields=kolun=glass=shboots=jetpack=end=score=0; //монетки,продолжения
+	shields=kolun=glass=shboots=jetpack=zend=score=0; //монетки,продолжения
 	continues=1; //продолжения
 	maxjump=-8; //высота прыжка
 	maxspeed=4; //макс. скорость
@@ -2262,7 +2409,7 @@ void f_game(void) { //проба скролла и объектов
 			//--- считаем заголовок уровня
 			SetLib("levels");
 			sprintf(levnum,"%02d",curr_level);
-			for (int i=0; i<=8; ++i) {
+			for (i=0; i<=8; ++i) {
 				files[i][0]=levnum[0];
 				files[i][1]=levnum[1];
 			}
@@ -2295,7 +2442,7 @@ void f_game(void) { //проба скролла и объектов
 			}
 			PaletteOn(palette);
 
-			end=0;while (gettic()<tic && end==0);
+			zend=0;while (gettic()<tic && zend==0);
 
 			PaletteOff(palette);
 
@@ -2400,7 +2547,7 @@ void f_game(void) { //проба скролла и объектов
 		}
 		PaletteOn(palette);
 
-		while ( end==0 ) {
+		while ( zend==0 ) {
 
 			draw=(speedraw==3 || speedraw==1 || waitboom&1)?1:0;
 
@@ -2421,12 +2568,15 @@ void f_game(void) { //проба скролла и объектов
 			//asm sti;
 
 			//считаем с жустика, если он есть
-			if ( J.present ) {
+			if (js_state()) {
+				js_read();
+			}
+			/*if ( J.present ) {
 				J.status();
 				up=J.a.up; down=J.a.down;
 				left=J.a.left; right=J.a.right;
 				fire=J.a.a; jump=J.a.b;
-			}
+			}*/
 
 			if ( demo ) {
 				//если демонстрация, то расшифруем
@@ -2434,14 +2584,14 @@ void f_game(void) { //проба скролла и объектов
 				left=i&1;	right=i&2;
 				up=i&4;         down=i&8;
 				jump=i&16;      fire=i&32;
-				end=i&64;
+				zend=i&64;
 				if ( pdemo>=maxdemo ) {
-					end=1;
+					zend=1;
 				}
 			} else {
 				//иначе пишем демонстрацию
 				if ( pdemo<maxdemo ) {
-					demobuf[pdemo++]=left|(right<<1)|(up<<2)|(down<<3)|(jump<<4)|(fire<<5)|(end<<6);
+					demobuf[pdemo++]=left|(right<<1)|(up<<2)|(down<<3)|(jump<<4)|(fire<<5)|(zend<<6);
 				}
 			}
 
@@ -2635,7 +2785,7 @@ void f_game(void) { //проба скролла и объектов
 #ifndef EDITOR					//на след. урвнь
 						if ( t_up && t_down ) {
 							man.s=s_end;
-							end=1;
+							zend=1;
 						}
 #endif
 					}
@@ -2692,10 +2842,10 @@ void f_game(void) { //проба скролла и объектов
 		//если мужика пришили... то
 		if ( demo ) {
 			//прерываение игры
-			end=hearts=0;
+			zend=hearts=0;
 		} else if ( man.s==s_over ) {
 			//подох
-			end=0;
+			zend=0;
 
 			//убавляем жизнь
 			if (--hearts<=0) {
@@ -2716,7 +2866,7 @@ void f_game(void) { //проба скролла и объектов
 				if ( dev!=255 ) {
 					modsetup("boss.fms", 4, 0 ,mix, dev, &state );
 					modvolume(vol,vol,vol,vol);
-					end=0;
+					zend=0;
 				}
 
 				if ( continues ) {
@@ -2728,7 +2878,7 @@ void f_game(void) { //проба скролла и объектов
 					mult("theend.rec");
 				}
 
-				while (gettic()<tic && end==0);
+				while (gettic()<tic && zend==0);
 				if ( dev!=255 ) {
 					modstop();
 				}
@@ -2740,10 +2890,21 @@ void f_game(void) { //проба скролла и объектов
 				blevel=(block)famemalloc(maxsiz_level);
 
 				PaletteOff(palette);
-				end=0;
+				zend=0;
 			}
 
 		} else if ( man.s==s_end ) {
+			// PATCH: secrets and things counters moved here before memory will be freed
+			//считаем оставш число секретов
+			x=0;
+			for ( i=0; i<maxmodel; ++i ) {
+				if ( models[i].typ>=m_copy ) ++x;
+			}
+			//подсчет кол-ва вещей
+			y=0;
+			for ( i=0; i<siz_level; ++i ) {
+				if ( blevel[i]&224 ) ++y;
+			}
 			SetLib("mult"); //мульт на конец уровня
 			if( setup.f>1 ) {
 				//bckg=famemalloc((unsigned long)320*200);
@@ -2766,28 +2927,18 @@ void f_game(void) { //проба скролла и объектов
 			TileBar(0,0,320,200,64,64,(block)hidscr+random(4)*64*64);
 			MoveXY((320-famestrlen("ИТОГИ УРОВНЯ")*3)/2,20);
 			vputBs("ИТОГИ УРОВНЯ",tfnt);
-			//считаем оставш число секретов
-			x=0;
-			for ( i=0; i<maxmodel; ++i ) {
-				if ( models[i].typ>=m_copy ) ++x;
-			}
 			MoveXY((320-famestrlen("СЕКРЕТЫ: %u%%")*3)/2,70);
 			vprintB(tfnt+144*2,"СЕКРЕТЫ: %u%%",(int)((nsecret-x)*100/nsecret));
-			//подсчет кол-ва вещей
-			x=0;
-			for ( i=0; i<siz_level; ++i ) {
-				if ( blevel[i]&224 ) ++x;
-			}
 			MoveXY((320-famestrlen("ВЕЩИ: %u%%")*3)/2,110);
-			vprintB(tfnt+144*4,"ВЕЩИ: %u%%",(int)((nitems-x)*100/nitems));
+			vprintB(tfnt+144*4,"ВЕЩИ: %u%%",(int)((nitems-y)*100/nitems));
 			if ( leveldef.end==0 ) {
 				MoveXY(26,160);	makepass(curr_level+1);
 				vprintB(tfnt+144*3,"ПАРОЛЬ: %s",stroka);
 			}
 			PaletteOn(palette);
 			tic=gettic()+18*20;
-			end=0;
-			while (gettic()<tic && end==0);
+			zend=0;
+			while (gettic()<tic && zend==0);
 			PaletteOff(palette);
 //-----------------------------
 			if ( dev!=255 ) {
@@ -2806,7 +2957,7 @@ void f_game(void) { //проба скролла и объектов
 			if ( leveldef.end==0 ) {
 				//инкремент уровня
 				++curr_level;
-				end=shields=0; //убираем щит, если есть
+				zend=shields=0; //убираем щит, если есть
 #ifdef DEMO
 				if( curr_level>2 ) {
 					SetLib("graph");
@@ -2846,11 +2997,11 @@ void f_game(void) { //проба скролла и объектов
 				//GetLib("normal.col",palette);
 				SetScreen(hidscr);
 #endif
-				continues=end=hearts=0;
+				continues=zend=hearts=0;
 			}
 		} else {
 			//прерываение игры
-			continues=end=hearts=0;
+			continues=zend=hearts=0;
 		}
 	} // для hearts
 	} //это для contin
@@ -2861,7 +3012,7 @@ void f_game(void) { //проба скролла и объектов
 		demobuf[pdemo-1]=1<<6; //клавиша ESC
 		SetLib("levels");
 		PutLib(f_demo,(block)demobuf,maxdemo);
-		//GetLib(f_demo,(block)demobuf);
+		GetLib(f_demo,(block)demobuf);
 	}
 	readlev(); Cls(28); ris_lab(xw,yw); PaletteOn(palette);
     m.on();
@@ -2870,6 +3021,9 @@ void f_game(void) { //проба скролла и объектов
 
 char check(register int x_,register int y_) { //выод кода блока по координатам
 	register int sdv;
+	// PATCH: crashed here on level1 (just in case, patch too)
+	x_ = (x_ < 0) ? 0 : x_;
+	y_ = (y_ < 0) ? 0 : y_;
 	//разделим координаты
 	sx=(x_&0x0f); x=x_>>4; sy=(y_&0x0f); y=y_>>4;
 	//позицию первую вычислим
@@ -2882,6 +3036,9 @@ char check(register int x_,register int y_) { //выод кода блока по координатам
 char checkdw(register int x_,register int y_) {
 	//вывод кода блока по координатам с коррекцией на пол
 	register int sdv;
+	// PATCH: crashed here on level1 (just in case, patch too)
+	x_ = (x_ < 0) ? 0 : x_;
+	y_ = (y_ < 0) ? 0 : y_;
 	//разделим координаты
 	sx=(x_&0x0f); x=x_>>4; sy=(y_&0x0f); y=y_>>4;
 	//позицию первую вычислим
@@ -3002,8 +3159,8 @@ void domodel(void) {
 						md->x+=md->sx;
 						md->y+=md->sy;
 						if ( md->typ==m_lift && md->sy==0 && md->sx==0) {
-							Swap(&md->x2,&md->x1);
-							Swap(&md->y2,&md->y1);
+							SwapShort(&md->x2,&md->x1);
+							SwapShort(&md->y2,&md->y1);
 						}
                                         }
 					PutCImg(md->x-r_x+16,md->y-r_y+16,md->lx,md->ly,lifts);
@@ -3051,7 +3208,7 @@ void domodel(void) {
 							if ( stricmp("EXIT",md->name0)==0 ) {
 								//конец уровня!!!!
 								man.s=s_end;
-								end=1;
+								zend=1;
 								//т.к. выод то пока!
 								break;
 							} else
@@ -3779,7 +3936,7 @@ void doman() { //управление Героем
 		if (man.y>siz_ylev*16) {
 			//выпадение ниже лабиринта
 			man.s=s_over;
-			end=1;
+			zend=1;
 		}
 	} else //норма
 	if ( man.s==s_go ) {
@@ -3981,11 +4138,12 @@ void getitem(int x_, int y_) { //взятие вещи по координатам
 void put_score(void) {
 	//вывод очков
 	static int i;
+	screen old;
 	if ( draw==0 ) {
 		return;	//не всегда выводить очки!
 	}
 
-	screen old=CurrentScreen;
+	old=CurrentScreen;
 	char_fgd=16;
 	NormalScreen();
 	Clip(0,0,319,199);
@@ -4594,17 +4752,18 @@ void doobj(void) {
 }
 
 void Delay( int p ) {
-	int i,j;
+	//int i,j;
 	long tic; //для задержки по таймеру
 	//моя п/п пауза
 	tic=gettic()+p;
-	while (gettic()<tic && end==0);
+	while (gettic()<tic && zend==0);
 }
 
 void mult(char * name) {
 	//считывание описания мульта и показ
 	screen text;
 	block txt,tmp;
+	block tail; // PATCH: text buffer overflow
 	char _char_fgd=char_fgd, _char_bkgd=char_bkgd; /*цвет символа и фона*/
 
 	int x,y;
@@ -4618,17 +4777,21 @@ void mult(char * name) {
 	char str6[20];
 	char str7[20];
 
+	x = y = 0;
 	NormalScreen();
 	//считаем сценарий
 	text=famemalloc(SizeLib(name)+8);
 	_fmemset(text,0,SizeLib(name)+8);
 	GetLib(name,(block)text); txt=(block)text;
+	tail = &txt[SizeLib(name) + 8]; // PATCH: text buffer overflow
 
-	n=1; end=0;
-	while(n>=1 && end==0) {
+	n=1; zend=0;
+	while(n>=1 && zend==0) {
 
+		n = tail - txt; n = (n > 80) ? 80 : n; *stroka = 0; // PATCH: text buffer overflow
 		//считаем очередн строку
-		memcpy((block)&stroka,txt,80);
+		memcpy((block)&stroka,txt,n);
+		stroka[n] = 0; // PATCH: text buffer overflow
 		n=sscanf(stroka,"%s %s %s %s %s %s %s ",
 		&str1,&str2,&str3,&str4,&str5,&str6,&str7);
 
@@ -4651,7 +4814,7 @@ void mult(char * name) {
 		if (strnicmp(str1,"PAU",3)==0) {
 			//пауза
 			tic=gettic()+18*atoi(str2);
-			while (gettic()<tic && end==0);
+			while (gettic()<tic && zend==0);
 		} else
 		if (stricmp(str1,"CLIP")==0) {
 			//обл экрана
@@ -4706,7 +4869,7 @@ void mult(char * name) {
 				/*if ( CurrentColor ) {
 					PutPixel(x+i,y+j);
 				}*/
-			} while (gettic()<tic && end==0);
+			} while (gettic()<tic && zend==0);
 			PutCMas(x,y,atoi(str3),atoi(str4),(block)hidscr);
 		} else
 		if (stricmp(str1,"IROLL")==0) {
@@ -4718,8 +4881,8 @@ void mult(char * name) {
 				tic=gettic()+1;
 				WVR();
 				PutCImg(x,y,atoi(str3),atoi(str4),(block)hidscr);
-				while (gettic()<tic && end==0);
-			} while ( --i>0 && end==0 );
+				while (gettic()<tic && zend==0);
+			} while ( --i>0 && zend==0 );
 		} else
 		if (stricmp(str1,"MUL")==0) {
 			//мульт из неск кадров повторяющийся N секунд
@@ -4733,7 +4896,7 @@ void mult(char * name) {
 				PutCImg(x,y,atoi(str3),atoi(str4),(block)hidscr+(i*atoi(str3)*atoi(str4)));
 				Delay(j);
 				if ( ++i>=k ) i=0;
-			} while (gettic()<tic && end==0);
+			} while (gettic()<tic && zend==0);
 		} else
 		if (stricmp(str1,"NMUL")==0) {
 			//мульт из неск кадров повторяющийся N раз
@@ -4753,23 +4916,23 @@ void mult(char * name) {
 						break;
 					}
 				}
-			} while (end==0);
+			} while (zend==0);
 		} else
 		if (strnicmp(str1,"TXT",3)==0) {
 			//вывод текста без просветов
 			MoveXY(x,y); tmp=txt;
 			while ( *tmp && *tmp!='@' ) ++tmp; ++tmp;
-			while ( *tmp && *tmp!='@' && end==0) {
+			while ( *tmp && *tmp!='@' && zend==0) {
 				if ( *tmp=='#' ) {
 					tic=gettic()+18;
-					while (gettic()<tic && end==0);
+					while (gettic()<tic && zend==0);
 				} else
 				if ( *tmp=='\n' ) {
 					MoveXY(x,(y+=9));
 				} else {
 					PutCh((str1[3])?CharUp(*tmp):(*tmp));
 					tic=gettic()+1;
-					while (gettic()<tic && end==0);
+					while (gettic()<tic && zend==0);
 				}
 				tmp++;
 			}
@@ -4778,7 +4941,7 @@ void mult(char * name) {
 			//вывод теста без просветов и без пауз
 			MoveXY(x,y); tmp=txt;
 			while ( *tmp && *tmp!='@' ) ++tmp; ++tmp;
-			while ( *tmp && *tmp!='@' && end==0) {
+			while ( *tmp && *tmp!='@' && zend==0) {
 				if ( *tmp=='\n' ) {
 					MoveXY(x,(y+=9));
 				} else {
@@ -4791,11 +4954,11 @@ void mult(char * name) {
 			//вывоб фразы большими буквами
 			MoveXY(x,y); tmp=txt;
 			while ( *tmp && *tmp!='@' ) ++tmp; ++tmp;
-			while ( *tmp && *tmp!='@' && end==0) {
+			while ( *tmp && *tmp!='@' && zend==0) {
 				putBch(x,y,(str1[4])?CharUp(*tmp):(*tmp),tfnt);
 				x+=24; ++tmp;
 				tic=gettic()+1;
-				while (gettic()<tic && end==0);
+				while (gettic()<tic && zend==0);
 			}
 		} else
 		if (stricmp(str1,"LPAL")==0) {
@@ -4827,7 +4990,7 @@ void mult(char * name) {
 		 while ( *txt<27 ) ++txt;
 	}
 m_exit:
-	if ( end ) {	//если прервали
+	if ( zend ) {	//если прервали
 		PaletteOff(palette); Cls(0);
 	}
 	char_fgd=_char_fgd;char_bkgd=_char_bkgd; /*цвет символа и фона*/

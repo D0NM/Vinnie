@@ -3,7 +3,7 @@
 
 //#define EDITOR 1
 #ifndef EDITOR
-//#define DEMO 1
+//!!! #define DEMO 1
 #endif
 
 #define wclock 1
@@ -83,13 +83,13 @@ void show_model(int n);
 void edmodel(int n);
 void domodel(void);
 void actmodel(void);
-char check(register int x_,register int y_);
-char checkdw(register int x_,register int y_);
+char check(register int x_,register int y_); //проверка на пустоту
+char checkdw(register int x_,register int y_); //проверка на пустоту
 
 void ris_lab(int,int); //вывод экрана для редакт
 void rislab(unsigned int,unsigned int); //вывод экрана в игр
-char check(unsigned int,unsigned int); //проверка на пустоту
-char checkdw(unsigned int,unsigned int); //проверка на пустоту
+//!!!char check(unsigned int,unsigned int); //проверка на пустоту
+//!!!char checkdw(unsigned int,unsigned int); //проверка на пустоту
 void getitem(int, int); //взятие вещи по координатам
 
 void addboom(int x, int y, int lx, int ly, char sx, char sy, char typ, block buf);
@@ -98,7 +98,7 @@ void addboom(int x, int y, int lx, int ly, char sx, char sy, char typ, block buf
 #define b_crash 2	//разлет кусков
 #define b_fall 3	//опадение кусков
 
-void addmess(char *m,unsigned char w=32);
+void addmess(char *m,unsigned char w); //!!! w=32
 void doboom(); //обработка взрыврв
 int addbullet(int x, int y, int sx, int sy, char typ, block buf);
 void doshop(int);
@@ -116,25 +116,31 @@ void mult(char *); //показ мульта
 void readstrip(void);
 //------- структуры
 
-struct levdef {
+//!!!
+#pragma pack(push, 1)
+
+typedef struct {
 	char name[16];
-	unsigned int lx,ly; //размер уровня
-	unsigned nx,ny;	//начальн коорд героя
+	unsigned short lx,ly;	//размер уровня
+	unsigned short nx,ny;	//начальн коорд героя
+//!!!	unsigned int lx,ly; //размер уровня
+//!!!	unsigned nx,ny;	//начальн коорд героя
 	unsigned char fonR,fonG,fonB; //окраска заднего фона
 	char end; //последний ли уровень?
 	char bckgname[13],fonname[13]; //назв задн план, фон
 	char mname0[13],mname1[13]; //назв м-ф в нач и конце уровня
 	char typ; //тип уровня
 	char musicname[13]; //назв музыки на уровень
-};
+} levdef;
 
 //враги
 #define maxobj 64
 
 
-struct object { //описание объекта
+typedef struct { //описание объекта
 	//char name[8];
-	int x,y; //координаты тек кв-та
+	short x,y; //координаты тек кв-та
+//!!!	int x,y; //координаты тек кв-та
 	char sx,sy; //ускорение
 	char dsx,dsy; //торможение по осям
 	unsigned char lx,ly; //высота ширина
@@ -151,16 +157,18 @@ struct object { //описание объекта
 	char f,f0,napr,myrg; //фаза скорость смены фазы и направление
 
 	char on; //вкл/выкл 1..x, 0 жизненн сила
-};
+} object;
 
-struct strkobj {
-	int x,y; //координаты тек
+typedef struct {
+	short x,y; //координаты тек
+//!!!	int x,y; //координаты тек
 	char n;	//номер типа монстра-объекта
-};
+} strkobj;
 
-struct hero {	//описание героя (глобальное)
+typedef struct {	//описание героя (глобальное)
 	char name[8];
-	int x,y; //координаты тек кв-та
+	short x,y; //координаты тек кв-та
+//!!!	int x,y; //координаты тек кв-та
 	char sx,sy; //ускорение
 	char dsx1,dsx2,dsy; //торможение по осям
 	unsigned char lx,ly; //высота ширина
@@ -185,12 +193,12 @@ struct hero {	//описание героя (глобальное)
 	char f,f0,fw,napr,myrg; //фаза скорость смены фазы и направление
 
 	char on; //вкл/выкл 1..x, 0 жизненн сила
-};
+} hero;
 
 //типы монстров
 #define maxmonstr 16
 
-struct monstr { //описание монстров
+typedef struct { //описание монстров
 	char name[9];
 	unsigned char lx,ly; //высота, ширина
 	char lfx,lfy;	//коорд точек опоры
@@ -211,60 +219,69 @@ struct monstr { //описание монстров
 	char maxspec;
 	//только для монстра
 	char _t_;
-};
+} monstr;
 
 //макс кол-во лифтов и прочих моделей
 #define maxmodel 48
-struct strmodels {
+typedef struct {
 	char name[8]; //свое имя
 	char name0[8]; //что включить
-	int x,y; //координаты тек кв-та
+	short x,y; //координаты тек кв-та
+//!!!	int x,y; //координаты тек кв-та
 	char sx,sy; //ускорение
 	unsigned char lx,ly; //высота ширина
-	int x1,y1; //коорд начального положения
-	int x2,y2; //коорд конечного положения
+	short x1,y1; //коорд начального положения
+	short x2,y2; //коорд конечного положения
+//!!!	int x1,y1; //коорд начального положения
+//!!!	int x2,y2; //коорд конечного положения
 	char typ;	//тип модели
 	block buf; //ссылка на текущую фазу
 	char on,on0; //вкл/выкл 1..x, 0 жизненн сила
-};
+} strmodels;
 
 //магазин
-struct sshop {	//описание предмета из магазина
-	int price; //цена
+typedef struct {	//описание предмета из магазина
+	short price; //цена
+//!!!	int price; //цена
 	char name[16];
 	unsigned char lx,ly; //высота ширина
 	block *buf; //ссылка на фазу
-	int sm;
+	short sm;
+//!!!	int sm;
 	char mf;	//кол-во фаз
-};
-
+} sshop;
 
 //макс кол-во взрывов
 #define maxboom 32
-struct boom { //координаты взрывов
-	int x,y; //координаты тек кв-та
+typedef struct { //координаты взрывов
+	short x,y; //координаты тек кв-та
+//!!!	int x,y; //координаты тек кв-та
 	unsigned char lx,ly; //высота ширина
 	char sx,sy; //высота ширина
 	char typ;	//тип объекта
 	block buf; //ссылка на фазу
 	char f; //фаза
-};
+} boom;
 
 //пули - шишки
 #define maxbullet 20
-struct strbullets {
-	int x,y; //координаты тек кв-та
+typedef struct {
+	short x,y; //координаты тек кв-та
+//!!!	int x,y; //координаты тек кв-та
 	char sx,sy; //ускорение
 	char typ;	//тип объекта
 	char f;		//фаза
 	block buf; //ссылка на текущую фазу
-};
+} strbullets;
 
 //для вывод элементов в лабиринте сверху
 #define maxnup (8*10)
-struct strup {
+typedef struct {
 	block adr; //ссылка на адрес экрана
 	block buf; //ссылка на текущую фазу
-};
+} strup;
+
+//!!!
+#pragma pack(pop)
 
 #endif

@@ -1,15 +1,22 @@
 /* Работа в граф режиме 256цв 320х200 */
 
 #include	"famegraf.h"
-#include	"mouse.h"
 
 #include	<conio.h>
 #include	<stdlib.h>
 #include	<string.h>
 #include	<stdarg.h>
-#include	<alloc.h>
+#include	<malloc.h>
 
+// PATCH: platform code
+#ifndef __MSDOS__
+#include "platform.h"
+#endif
+
+#ifdef EDITOR
+#include	"mouse.h"
 extern Mouse m;
+#endif
 
 int win_num=0; /*текущее открытое окно*/
 struct {
@@ -724,7 +731,7 @@ char CharUp(unsigned char i) {
 }
 
 int GetString(char *str,int lstr) {
-  int i,j,lpos,nkey;
+  int /*i,j,*/lpos,nkey;
   int xs=G_x, ys=G_y; /*поз графич курсора*/
   char oldbk=char_bkgd;
 
@@ -774,7 +781,9 @@ Do_Zaboj:
 
 void WPut(int x, int y, int lx, int ly) {
 //рисование выпуклого окна со световым бликом и теневым
+#ifdef EDITOR
 	m.off();
+#endif
 	CurrentColor=wfon;
 	Bar(x,y,lx,ly);
 	CurrentColor=wlight;
@@ -787,12 +796,16 @@ void WPut(int x, int y, int lx, int ly) {
 	Bar(x+lx-1,y+1,1,ly-1);
 	CurrentColor++;
 	Bar(x+lx-1,y+ly-1,1,1);
+#ifdef EDITOR
 	m.on();
+#endif
 }
 
 void WPut1(int x, int y, int lx, int ly) {
 //рисование вдавленного окна со световым бликом и теневым
+#ifdef EDITOR
 	m.off();
+#endif
 	CurrentColor=wfon+1;
 	Bar(x,y,lx,ly);
 	CurrentColor=wshadow-1;
@@ -801,12 +814,16 @@ void WPut1(int x, int y, int lx, int ly) {
 	CurrentColor=0;
 	Bar(x,y,lx,1);
 	Bar(x,y,1,ly);
+#ifdef EDITOR
 	m.on();
+#endif
 }
 
 void _WOpen(int x, int y, int lx, int ly) {
 //открытие окна с запоминанием фона под ним
+#ifdef EDITOR
 	m.off();
+#endif
 	win[win_num].x=x;
 	win[win_num].y=y;
 	win[win_num].lx=lx;
@@ -814,12 +831,16 @@ void _WOpen(int x, int y, int lx, int ly) {
 	win[win_num].save=(block)famemalloc(lx*ly);
 	GetImg(x,y,lx,ly,win[win_num].save);
 	win_num++;
+#ifdef EDITOR
 	m.on();
+#endif
 }
 
 void WOpen(int x, int y, int lx, int ly) {
 //открытие окна с запоминанием фона под ним
+#ifdef EDITOR
 	m.off();
+#endif
 	win[win_num].x=x;
 	win[win_num].y=y;
 	win[win_num].lx=lx;
@@ -828,16 +849,22 @@ void WOpen(int x, int y, int lx, int ly) {
 	GetImg(x,y,lx,ly,win[win_num].save);
 	WPut(x,y,lx,ly);
 	win_num++;
+#ifdef EDITOR
 	m.on();
+#endif
 }
 
 void WClose() {
 //закрытие последнего окна с восстановлением фона
+#ifdef EDITOR
 	m.off();
+#endif
 	--win_num;
 	PutImg(win[win_num].x,win[win_num].y,win[win_num].lx,win[win_num].ly,win[win_num].save);
 	farfree(win[win_num].save);
+#ifdef EDITOR
 	m.on();
+#endif
 }
 
 /*

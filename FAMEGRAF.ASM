@@ -1,3 +1,4 @@
+;TASM.EXE /mx /m2 FAMEGRAF.ASM
 	IDEAL
 	JUMPS
 	LOCALS
@@ -175,6 +176,9 @@ SEGMENT	CODE	WORD
 	push	bp
 	mov	bp,sp
 	push	ds
+	push	es;!
+	push	si;!
+	push	di;!
 
 ; необходимо переслать из DS:SI -> ES:DI
 	mov	ax,[WORD HIGH buf1]	;seg
@@ -189,6 +193,9 @@ SEGMENT	CODE	WORD
 	mov	cx,(64000/2)
 	rep	movsw
 
+	pop	di;!
+	pop	si;!
+	pop	es;!
 	pop	ds
 	mov	sp,bp
 	pop	bp
@@ -208,6 +215,9 @@ SEGMENT	CODE	WORD
 	push	bp
 	mov	bp,sp
 	push	ds
+	push	es;!
+	push	si;!
+	push	di;!
 
 ; необходимо переслать из DS:SI -> ES:DI
         mov     ax,[WORD HIGH buf]     ;seg
@@ -234,6 +244,9 @@ SEGMENT	CODE	WORD
 	mov	cx,(64000/2)
 	rep	movsw
 
+	pop	di;!
+	pop	si;!
+	pop	es;!
 	pop	ds
 	mov	sp,bp
 	pop	bp
@@ -252,6 +265,8 @@ SEGMENT	CODE	WORD
 
 	push	bp
 	mov	bp,sp
+	push	es;!
+	push	di;!
 
 ; необходимо очистить ES:DI
 	mov	ax,[WORD HIGH _CurrentScreen]	;seg
@@ -264,6 +279,8 @@ SEGMENT	CODE	WORD
 	mov	cx,(64000/2)
 	rep	stosw
 
+	pop	di;!
+	pop	es;!
 	pop	bp
 	ret
 	ENDP
@@ -332,6 +349,7 @@ SEGMENT	CODE	WORD
 
 	push	bp
 	mov	bp,sp
+	push	es;!
 	push	ax
 	push	bx
 
@@ -352,6 +370,7 @@ SEGMENT	CODE	WORD
 
 	pop	bx
 	pop	ax
+	pop	es;!
 	pop	bp
 
 	ret
@@ -370,6 +389,7 @@ SEGMENT	CODE	WORD
 
 	push	bp
 	mov	bp,sp
+	push	es;!
 
 	mov	ax,[y]
 	mov	dx,140h
@@ -382,6 +402,7 @@ SEGMENT	CODE	WORD
 	mov	ah,0
 	jmp	short $+2		; delay for I/O
 
+	pop	es;!
 	pop	bp
 	ret
 	ENDP
@@ -399,6 +420,8 @@ SEGMENT	CODE	WORD
 
 	push	bp		; preserve caller registers
 	mov	bp,sp
+	push	es;!
+	push	di;!
 	push	ax
 	push	bx
 	push	cx
@@ -433,6 +456,8 @@ SEGMENT	CODE	WORD
 	pop	cx
 	pop	bx
 	pop	ax
+	pop	di;!
+	pop	es;!
 	pop	bp
 	ret
 	ENDP
@@ -453,6 +478,9 @@ SEGMENT	CODE	WORD
         push    bp
 	mov	bp,sp
 	push	ds
+	push	es;!
+	push	si;!
+	push	di;!
 
 	mov	ax,[y]		; AX := y
 	mov	bx,[x]		; BX := x
@@ -497,6 +525,9 @@ SEGMENT	CODE	WORD
 	pop	cx
 	loop	@@local2
 
+	pop	di;!
+	pop	si;!
+	pop	es;!
 	pop	ds
 	mov	sp,bp
 	pop	bp
@@ -519,6 +550,9 @@ SEGMENT	CODE	WORD
         push    bp
 	mov	bp,sp
 	push	ds
+	push	es;!
+	push	si;!
+	push	di;!
 
 	mov	ax,[y]		; AX := y
 	mov	bx,[x]		; BX := x
@@ -572,6 +606,9 @@ SEGMENT	CODE	WORD
 	mov	cx,bx		; восст внешн счетчик цикла Y
 	loop	@@local3
 
+	pop	di;!
+	pop	si;!
+	pop	es;!
 	pop	ds		;восст регистр сегмента данных
 	mov	sp,bp
 	pop	bp
@@ -595,6 +632,9 @@ SEGMENT	CODE	WORD
         push    bp
 	mov	bp,sp
 	push	ds
+	push	es;!
+	push	si;!
+	push	di;!
 
 	mov	ax,[y]		; AX := y
 	mov	bx,[x]		; BX := x
@@ -650,6 +690,9 @@ SEGMENT	CODE	WORD
 	mov	cx,bx		; восст внешн счетчик цикла Y
 	loop	@@local3
 
+	pop	di;!
+	pop	si;!
+	pop	es;!
 	pop	ds		;восст регистр сегмента данных
 	mov	sp,bp
 	pop	bp
@@ -673,6 +716,9 @@ SEGMENT	CODE	WORD
         push    bp
 	mov	bp,sp
 	push	ds
+	push	es;!
+	push	si;!
+	push	di;!
 
 	mov	ax,[y]		; AX := y
 	mov	bx,[x]		; BX := x
@@ -727,6 +773,9 @@ SEGMENT	CODE	WORD
 	mov	cx,bx		; восст внешн счетчик цикла Y
 	loop	@@local3
 
+	pop	di;!
+	pop	si;!
+	pop	es;!
 	pop	ds		;восст регистр сегмента данных
 	mov	sp,bp
 	pop	bp
@@ -750,6 +799,9 @@ SEGMENT	CODE	WORD
         push    bp
 	mov	bp,sp
 	push	ds
+	push	es;!
+	push	si;!
+	push	di;!
 
 	mov	ax,[y]		; AX := y
 	mov	bx,[x]		; BX := x
@@ -806,6 +858,9 @@ SEGMENT	CODE	WORD
 	mov	cx,bx		; восст внешн счетчик цикла Y
 	loop	@@local3
 
+	pop	di;!
+	pop	si;!
+	pop	es;!
 	pop	ds		;восст регистр сегмента данных
 	mov	sp,bp
 	pop	bp
@@ -830,6 +885,9 @@ SEGMENT	CODE	WORD
         push    bp
 	mov	bp,sp
 	push	ds
+	push    es;!
+	push    si;!
+	push    di;!
 
 	mov	ax,[y]		; AX := y
 	mov	bx,[x]		; BX := x
@@ -861,6 +919,9 @@ SEGMENT	CODE	WORD
 	pop	cx
 	loop	@@local2
 
+	pop	di;!
+	pop	si;!
+	pop	es;!
 	pop	ds
 	mov	sp,bp
 	pop	bp
@@ -884,6 +945,9 @@ SEGMENT	CODE	WORD
         push    bp
 	mov	bp,sp
 	push	ds
+	push	es;!
+	push	si;!
+	push	di;!
 
 	mov	ax,[y]		; AX := y
 	mov	bx,[x]		; BX := x
@@ -916,6 +980,9 @@ SEGMENT	CODE	WORD
 	add	di,320-16
 	loop	@@local2
 
+	pop	di;!
+	pop	si;!
+	pop	es;!
 	pop	ds
 	mov	sp,bp
 	pop	bp
@@ -938,6 +1005,9 @@ SEGMENT	CODE	WORD
 	push	bp
 	mov	bp,sp
 	push	ds
+	push	es;!
+	push	si;!
+	push	di;!
 
 	mov	ax,[y]		; AX := y
 	mov	bx,[x]		; BX := x
@@ -971,6 +1041,9 @@ SEGMENT	CODE	WORD
 	pop	cx
 	loop	@@local0
 
+	pop	di;!
+	pop	si;!
+	pop	es;!
 	pop	ds
 	mov	sp,bp
 	pop	bp
@@ -993,6 +1066,9 @@ SEGMENT	CODE	WORD
 	push	bp		; preserve caller registers
 	mov	bp,sp
 	push	ds
+	push	es;!
+	push	si;!
+	push	di;!
 
 	mov	ax,[y]		; AX := y
 	mov	bx,[x]		; BX := x
@@ -1031,6 +1107,9 @@ SEGMENT	CODE	WORD
 	add	di,320		;прибавим кол-во точек в строке
 	mov	cx,bx		; восст внешн счетчик цикла Y
 	loop	@@local3
+	pop	di;!
+	pop	si;!
+	pop	es;!
 	pop	ds		;восст регистр сегмента данных
 	mov	sp,bp
 	pop	bp
@@ -1053,6 +1132,9 @@ SEGMENT	CODE	WORD
 	push	bp		; preserve caller registers
 	mov	bp,sp
 	push	ds
+	push	es;!
+	push	si;!
+	push	di;!
 
 	mov	ax,[y]		; AX := y
 	mov	bx,[x]		; BX := x
@@ -1091,6 +1173,9 @@ SEGMENT	CODE	WORD
 	add	di,320		;прибавим кол-во точек в строке
 	mov	cx,bx		; восст внешн счетчик цикла Y
 	loop	@@local3
+	pop	di;!
+	pop	si;!
+	pop	es;!
 	pop	ds		;восст регистр сегмента данных
 	mov	sp,bp
 	pop	bp
@@ -1114,6 +1199,9 @@ SEGMENT	CODE	WORD
 	push	bp		; preserve caller registers
 	mov	bp,sp
 	push	ds
+	push	es;!
+	push	si;!
+	push	di;!
 
 	mov	ax,[y]		; AX := y
 	mov	bx,[x]		; BX := x
@@ -1158,6 +1246,9 @@ SEGMENT	CODE	WORD
 
 	mov	cx,bx		; восст внешн счетчик цикла Y
 	loop	@@local3
+	pop	di;!
+	pop	si;!
+	pop	es;!
 	pop	ds		;восст регистр сегмента данных
 	mov	sp,bp
 	pop	bp
@@ -1181,6 +1272,9 @@ SEGMENT	CODE	WORD
 	push	bp		; preserve caller registers
 	mov	bp,sp
 	push	ds
+	push	es;!
+	push	si;!
+	push	di;!
 
 	mov	ax,[y]		; AX := y
 	mov	bx,[x]		; BX := x
@@ -1225,6 +1319,9 @@ SEGMENT	CODE	WORD
 
 	mov	cx,bx		; восст внешн счетчик цикла Y
 	loop	@@local3
+	pop	di;!
+	pop	si;!
+	pop	es;!
 	pop	ds		;восст регистр сегмента данных
 	mov	sp,bp
 	pop	bp
@@ -1248,6 +1345,9 @@ SEGMENT	CODE	WORD
 	push	bp		; preserve caller registers
 	mov	bp,sp
 	push	ds
+	push	es;!
+	push	si;!
+	push	di;!
 
 	mov	ax,[y]		; AX := y
 	mov	bx,[x]		; BX := x
@@ -1286,6 +1386,9 @@ SEGMENT	CODE	WORD
 	add	di,320-16		;прибавим кол-во точек в строке
 	mov	cx,bx		; восст внешн счетчик цикла Y
 	loop	@@local3
+	pop	di;!
+	pop	si;!
+	pop	es;!
 	pop	ds		;восст регистр сегмента данных
 	mov	sp,bp
 	pop	bp
@@ -1344,6 +1447,7 @@ SEGMENT	CODE	WORD
 
 	push	bp		; preserve caller registers
 	mov	bp,sp
+	push	es;!
 
 	mov	ax,[WORD HIGH buf]	;seg
 	mov	es,ax
@@ -1354,6 +1458,7 @@ SEGMENT	CODE	WORD
 	mov	ax,1017h		;функция считывания палитры
 	int	10h
 
+	pop	es;!
 	mov	sp,bp
 	pop	bp
 	ret
@@ -1381,6 +1486,7 @@ FontSeg  dw      0C000h
 	push	si
 	push	di
 	push	ds
+	push	es;!
 
 ; calculate first pixel address
 
@@ -1439,6 +1545,7 @@ FontSeg  dw      0C000h
 	pop	cx
 	loop	@@L102		; loop down character
 
+	pop	es;!
 	pop	ds		; restore registers and return
 	pop	di
 	pop	si
@@ -1485,6 +1592,8 @@ SEGMENT	CODE	WORD
 
 	push	bp
 	mov	bp,sp
+	push	es;!
+	push	di;!
 
         mov     es,[FontSeg]
         mov     di,[FontOffset]
@@ -1493,6 +1602,9 @@ SEGMENT	CODE	WORD
 
 	mov	al,[es:di]
 	mov	ah,0
+
+	pop	di;!
+	pop	es;!
 	pop	bp
 	ret
 	ENDP
@@ -1515,6 +1627,9 @@ SEGMENT	CODE	WORD
         push    bp
 	mov	bp,sp
 	push	ds
+	push	es;!
+	push	si;!
+	push	di;!
 
 	mov	ax,[y]		; AX := y
 	mov	bx,[x]		; BX := x
@@ -1560,6 +1675,9 @@ SEGMENT	CODE	WORD
 	pop	cx
 	loop	@@local2
 
+	pop	di;!
+	pop	si;!
+	pop	es;!
 	pop	ds
 	mov	sp,bp
 	pop	bp
@@ -1581,6 +1699,9 @@ SEGMENT	CODE	WORD
         push    bp
 	mov	bp,sp
 	push	ds
+	push	es;!
+	push	si;!
+	push	di;!
 
 	mov	di,320*16+16
 	mov	es,[WORD HIGH _VScreen]
@@ -1622,6 +1743,9 @@ SEGMENT	CODE	WORD
 	pop	cx
 	loop	@@local2
 
+	pop	di;!
+	pop	si;!
+	pop	es;!
 	pop	ds
 	mov	sp,bp
 	pop	bp
@@ -1672,7 +1796,11 @@ SEGMENT	CODE	WORD
 	;push	bp
 	;mov	bp,sp
 	mov	bx,ds
-	;push	ds
+	push	ds
+	push	es;!
+	push	si;!
+	push	di;!
+
 
 	mov	es,[WORD HIGH _CurrentAdr]
 	mov	di,[WORD LOW _CurrentAdr]
@@ -1694,7 +1822,10 @@ SEGMENT	CODE	WORD
 	loop	@@local2
 
 	mov	ds,bx
-	;pop	ds
+	pop	di;!
+	pop	si;!
+	pop	es;!
+	pop	ds
 	;pop	bp
 	ret
 	ENDP
@@ -1710,7 +1841,12 @@ SEGMENT	CODE	WORD
 	PROC	@SPutMas16$qv FAR
 	;push	bp
 	;mov	bp,sp
-	mov	bx,ds
+	;mov	bx,ds
+	push	ds;!
+	push	es;!
+	push	si;!
+	push	di;!
+
 
 	mov	es,[WORD HIGH _CurrentAdr]
 	mov	di,[WORD LOW _CurrentAdr]
@@ -1835,8 +1971,11 @@ SEGMENT	CODE	WORD
 	add	di,320-16	;прибавим кол-во точек в строке
 	loop	@@begstr
 
-	;pop	ds
-	mov	ds,bx
+	pop	di;!
+	pop	si;!
+	pop	es;!
+	pop	ds
+	;mov	ds,bx
 	;pop	bp
 	ret
 

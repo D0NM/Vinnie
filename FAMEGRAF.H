@@ -2,8 +2,18 @@
 #define H_FAMEGRAPH
 
 #include <stdio.h>
-#define min(x,y) (x>y?y:x)
-#define max(x,y) (x<y?y:x)
+
+#ifndef __MSDOS__
+#include "platform.h"
+#endif
+
+#ifndef max
+#define max(a,b) (((a) > (b)) ? (a) : (b))
+#endif
+
+#ifndef min
+#define min(a,b) (((a) < (b)) ? (a) : (b))
+#endif
 
 typedef /*unsigned*/ char far * block;
 typedef void far * screen;
@@ -21,8 +31,10 @@ extern void far modinit(void);
 
 extern void far CopyBlock(int,int,int,int,screen dest,int,int,screen src);
 
+#ifdef __MSDOS__
 #ifdef __cplusplus
 }
+#endif
 #endif
 
 #define k_up	18432
@@ -174,13 +186,15 @@ void ReadData(char *data_name,block dest, unsigned long n);
 
 // Спрайты (c) BMV
 
+#pragma pack(push, 1)
 struct sprites {
-  int x,y;          //текущие координаты
-  int ox,oy;        //старые координаты
-  int lx,ly;        //ширина и высота тек. спр.
+  short x,y;          //текущие координаты
+  short ox,oy;        //старые координаты
+  short lx,ly;        //ширина и высота тек. спр.
   block map;        //ссылка на граф.образ
   unsigned char on; //1-вкл, 0-выкл
 };
+#pragma pack(pop)
 
 void InitSpr(void); //начальная инициализация
 int CreateSpr(int lx,int ly, block map); //создать спрайт
@@ -208,5 +222,11 @@ extern block pakdest;
 void far *famemalloc(unsigned long); //типа farmalloc но с диагностикой
 void _fmeminv(block s, unsigned long n); //инвертирует кусок памяти
 void fatalerror(char *t);
+
+#ifndef __MSDOS__
+#ifdef __cplusplus
+}
+#endif
+#endif
 
 #endif

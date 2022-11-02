@@ -1,64 +1,35 @@
-#ifndef H_JOY
-#define H_JOY
-
-#include <stdio.h>
+#ifndef __JOY_H
+#define __JOY_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-// Графические переменные
-extern char far	a_1;
-extern char far	a_2;
-extern char far	b_1;
-extern char far	b_2;
+#define JOY1_L 0x01
+#define JOY1_R 0x02
+#define JOY1_U 0x04
+#define JOY1_D 0x08
+#define JOY2_L 0x10
+#define JOY2_R 0x20
+#define JOY2_U 0x40
+#define JOY2_D 0x80
+#define JOY1_A 0x100
+#define JOY1_B 0x200
+#define JOY2_A 0x400
+#define JOY2_B 0x800
 
-extern int far	xa;
-extern int far	ya;
-extern int far	xb;
-extern int far	yb;
+typedef void far (*JS_UPROC)(unsigned short);
 
-extern void far jstat(void);
+void js_init(void);
+int js_state(void);
+void js_on(void);
+void js_off(void);
+void js_set(JS_UPROC funcaddr);
+void js_read(void);
+void js_test(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-
-struct manipulator {
-	int x;
-	int y;
-	char a;
-	char b;
-	unsigned char left,right,up,down;	//положение жустика
-	unsigned int fleft,fright,fup,fdown;	//пороги чувствительности
-	unsigned int mleft,mright,mup,mdown;	//мах значения
-};
-
-class Joy {
-private:
-
-public:
-	manipulator a;
-	manipulator b;
-	unsigned char present;	//кол-во джойстиков
-
-	Joy(void) {
-		jstat();
-		present=0;
-		if (xa || ya)
-			present=1;
-		if (xb || yb)
-			present=2;
-	}
-
-	~Joy(void) {
-	}
-
-	void status(void);
-
-	void init(void);	//настройка джойстика
-};
-
 #endif
-
