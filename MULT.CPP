@@ -241,7 +241,7 @@ void mult(char * name) {
 		}
 
 		 //идем на след строку
-		 while ( *txt>27 || *txt==9 ) ++txt;
+		while ( ((*txt>>27) || (*txt==9)) && (txt < tail) ) ++txt;
 		 while ( *txt<27 ) ++txt;
 	}
 m_exit:
