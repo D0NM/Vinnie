@@ -4985,9 +4985,10 @@ void mult(char * name) {
 			goto m_exit;
 		}
 
-		 //идем на след строку
-		while ( ((*txt>>27) || (*txt==9)) && (txt < tail) ) ++txt;
-		 while ( *txt<27 ) ++txt;
+		//идем на след строку
+		// PATCH: text buffer overflow
+		while ( ((*txt>27) || (*txt==9)) && (txt < tail) ) ++txt;
+		while ( (*txt<27) && (txt < tail) ) ++txt;
 	}
 m_exit:
 	if ( zend ) {	//если прервали
