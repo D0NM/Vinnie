@@ -665,6 +665,7 @@ int main(void) {
 	while ( zend==0 ) {
 		//пока не нажата какая-либо клавиша - засставка
 		kb_set(md);
+		str0[0] = 0; // PATCH: fix glitched menu
 		SetLib("mult"); //мульт на начало уровня
 		mult("zast.rec");
 		SetLib("graph");
@@ -718,7 +719,7 @@ mainmenu:
 			MoveXY(5,10);
 			vputBs("Супер Винни-Пух",tfnt+144*4);
 			MoveXY(22,170);
-			vputBs("(C) 2022, v2.05", tfnt + 144 * 1); // PATCH: show version and year
+			vputBs("(C) 2023, v2.06", tfnt + 144 * 1); // PATCH: show version and year
 			//vputBs("(C) 1996 FaMe",tfnt+144*1);
 #ifdef DEMO
 			MoveXY(10,192);
@@ -827,6 +828,7 @@ mainmenu:
 					}
 					curr_level=0;
 					zend=0;
+					delay(1000); // PATCH: wait for pressed keys to release
 					break;
 				case 2:	//демо
 					PaletteOff(palette);
@@ -4985,10 +4987,10 @@ void mult(char * name) {
 			goto m_exit;
 		}
 
-		//идем на след строку
-		// PATCH: text buffer overflow
-		while ( ((*txt>27) || (*txt==9)) && (txt < tail) ) ++txt;
-		while ( (*txt<27) && (txt < tail) ) ++txt;
+		 //идем на след строку
+		 // PATCH: text buffer overflow
+		 while ( (txt < tail) && ((*txt>27) || (*txt==9)) ) ++txt;
+		 while ( (txt < tail) && (*txt<27) ) ++txt;
 	}
 m_exit:
 	if ( zend ) {	//если прервали

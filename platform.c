@@ -45,7 +45,7 @@ static LONG lSyncFlag = 0;
 static KB_UPROC kbu_func = NULL;
 static char kb_state = 0;
 
-static dwShotNum = 0;
+static DWORD dwShotNum = 0;
 void DumpScreen(void) {
 bmp_data scr_copy;
 TCHAR s[1025];

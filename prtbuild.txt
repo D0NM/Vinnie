@@ -1,14 +1,17 @@
-Super Pooh. Супер Винни-Пух. v2.05
+Super Pooh. Супер Винни-Пух. v2.06
 (c) FaMe SoftWare 1995-96
 e-mail: bmv(a)mail.ru
+official GitHub repository: https://github.com/D0NM/Vinnie
 
-(c) -=CHE@TER=- 2022
+(c) -=CHE@TER=- 2022,2023
 e-mail: _ctpax_(a)mail.ru
 web: http://ctpax-cheater.losthost.org/htmldocs/pooh.htm
 
 Source codes for Super Pooh port.
 Compilation with EDITOR or DEMO macros not tested.
-Some files missing (like mouse) - you can still find them in original source code archive:
+Some files missing (like mouse) - you can still find them in official repository.
+
+Also original game source codes can be found here (without any fixes):
 https://web.archive.org/web/20190804150759/http://famesoft.ru/SuperPoohSrc20120317021020.rar
 
 To compile for DOS16 (realtime mode) you'll need the following files:
@@ -26,7 +29,7 @@ POOH.CPP - main game code
 ALL.H - additional header files
 FAMEGRAF.H - additional header files
 
-You can use Borland Turbo C version at least 3.xx to compile source codes (make a project with all these files).
+You can use Borland Turbo C version at least 3.0 to compile source codes (make a project with all these files).
 Please not that if you replace MOD-OBJ.OBJ with MODOBJ-R.OBJ from registered version of modplayer code for PC Speaker patch will not work!
 Also note that you need to set a "Large" model to compile source codes.
 Do not forget to post-process final file:
@@ -55,7 +58,7 @@ platform.h - Windows routines
 
 setpoohw.c - very simply standalone setup tool for Windows
 
-Please not that you NEED TO replace *.CPP extension with *.c ("c" MUST BE LOWERCASED!) or you get a "__gxx_personality_v0" error in GCC!
+You may need to replace *.CPP extension with *.c ("c" lowercased) or you may get a "__gxx_personality_v0" error in GCC.
 I use to compile GCC 3.2 (mingw special 20020817-1) from DEV-CPP distributive.
 
 Use "winbuild.bat" to build both files "poohw.exe" and "setpoohw.exe" for Windows.
